@@ -1,4 +1,5 @@
-from AES_box import S_BOX, L_SBOX, RCON
+from Crypto.AES_box import S_BOX, L_SBOX, RCON
+# from AES_box import S_BOX, L_SBOX, RCON
 import copy
 import binascii
 
@@ -66,7 +67,6 @@ class AES():
             for col in range(self.N):
                 state[row][col] = self.__l_sbox[state[row][col]>>4][state[row][col]&0x0F]
         
-
     def __inv_shift_rows(self, state):
         shift_num = 3
         for row in range(1, self.N):
@@ -95,13 +95,16 @@ class AES():
         sub_word_list = []
         # shift one byte
         W = ((W<<8)|(W>>24))&0xFFFFFFFF
+
         # sub word
         bytes_array = W.to_bytes(4, byteorder='big', signed=False)
         for byte in bytes_array:
             sub_word_list.append(self.__s_box[byte>>4][byte&0x0F])
         W = int.from_bytes(bytes(sub_word_list), byteorder='big', signed=False)  
+
         # xor rcon
         W ^= self.__Rcon[rounds//4 - 1]
+        
         return W
 
     def __key_extension(self, key) -> list:
@@ -113,6 +116,11 @@ class AES():
             else:
                 W.append(W[rounds - 4] ^ self.__T(W[rounds - 1], rounds))
         
+        # for i in range(11):
+        #     temp = []
+        #     for k in range(4):
+        #         temp.append(hex(W[i*4+k]))  
+        #     print('Round[%d]:' % i, temp)
         for i in range(11):
             key_bytes = b''
             for n in range(self.N):
@@ -201,28 +209,44 @@ class AES():
         return plain
     
     def __str__(self) -> str:
-        def print_matrix(state):
-            rounds = 0
-            for matrix in state:
-                for i in matrix:
-                    print(list(map(hex,i)))
-                print('')
+        # def print_matrix(state):
+        #     rounds = 0
+        #     for matrix in state:
+        #         for i in matrix:
+        #             print(list(map(hex,i)))
+        #         print('')
                 
         key = self.__key
         print('key is %s' % key)
-        print_matrix(self.__key_state_matrix)
+        # print_matrix(self.__key_state_matrix)
+        
     def test_func(self):
         def print_matrix(state):
             for i in state: 
                 print(list(map(hex,i)))
             print('')
-        
+
+        List = self.__to_state_matrix(b'2C\xf6\xa8\x88Z0\x8d11\x98\xa2\xe07\x074')
+
+        # self.__add_round_key(List, self.__key_state_matrix[0])
+        # print("[+]AddRoundKey: ")
+        # print_matrix(List)
+
+        # self.__sub_bytes(List)
+        # print('[+]SubBytes: ')
+        # print_matrix(List)
+
+        # self.__shift_rows(List)
+        # print('[+]Shift: ')
+        # print_matrix(List)
+
+        # self.__mix_columns(List)
+        # print("[+]MixColumns: ")
+        # print_matrix(List)
 if __name__ == "__main__":
     # 2b7e151628aed2a6abf7158809cf4f3c
     # 3243f6a8885a308d313198a2e0370734
-    plain = b'aaaabbbbccccddddabcd'
     aes = AES(b'+~\x15\x16(\xae\xd2\xa6\xab\xf7\x15\x88\t\xcfO<')
-    cipher = aes.encrypt(plain)
-    print(cipher)
-    print(aes.decrypt(cipher))
-    
+    plain = b'2C\xf6\xa8\x88Z0\x8d11\x98\xa2\xe07\x074'
+    cirphertext = aes.encrypt(plain)
+    print(binascii.b2a_hex(cirphertext))
